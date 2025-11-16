@@ -2,11 +2,81 @@
 
 require_once 'AppController.php';
 
-class DashboardController extends AppController{
+class DashboardController extends AppController
+{
+    private static $instance = null;
 
-    public function index(?int $id){
-        //TODO wyswietli wszystkie projekty z bazy danych
-
-        return $this->render("dashboard");
+    private function __construct() {}
+    private function __clone() {}
+    public function __wakeup()
+    {
+        throw new \Exception("Cannot unserialize singleton");
     }
+
+    public static function getInstance(): self
+    {
+        if (self::$instance === null) {
+            self::$instance = new self();
+        }
+
+        return self::$instance;
+    }
+
+    public function index(?int $id)
+    {
+        // TODO wyswietli wszystkie projekty z bazy danych
+        $cards = [
+            [
+                'id' => 1,
+                'title' => 'Ace of Spades',
+                'subtitle' => 'Legendary card',
+                'imageUrlPath' => 'https://deckofcardsapi.com/static/img/AS.png',
+                'href' => '/cards/ace-of-spades'
+            ],
+            [
+                'id' => 2,
+                'title' => 'Queen of Hearts',
+                'subtitle' => 'Classic romance',
+                'imageUrlPath' => 'https://deckofcardsapi.com/static/img/QH.png',
+                'href' => '/cards/queen-of-hearts'
+            ],
+            [
+                'id' => 3,
+                'title' => 'King of Clubs',
+                'subtitle' => 'Royal strength',
+                'imageUrlPath' => 'https://deckofcardsapi.com/static/img/KC.png',
+                'href' => '/cards/king-of-clubs'
+            ],
+            [
+                'id' => 4,
+                'title' => 'Jack of Diamonds',
+                'subtitle' => 'Sly and sharp',
+                'imageUrlPath' => 'https://deckofcardsapi.com/static/img/JD.png',
+                'href' => '/cards/jack-of-diamonds'
+            ],
+            [
+                'id' => 5,
+                'title' => 'Ten of Hearts',
+                'subtitle' => 'Lucky draw',
+                'imageUrlPath' => 'https://deckofcardsapi.com/static/img/0H.png',
+                'href' => '/cards/ten-of-hearts'
+            ],
+        ];
+
+        if ($id>0) {
+            $cards = [
+                [
+                    'id' => 1,
+                    'title' => 'Ace of Spades',
+                    'subtitle' => 'Legendary card',
+                    'imageUrlPath' => 'https://deckofcardsapi.com/static/img/AS.png',
+                    'href' => '/cards/ace-of-spades'
+                ],
+            ];
+        }
+
+        return $this->render("dashboard", ['cards' => $cards]);
+    }
+
+    
 }
