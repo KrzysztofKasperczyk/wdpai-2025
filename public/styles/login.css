@@ -1,0 +1,21 @@
+body {
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+form {
+    box-shadow: rgba(255, 166, 0, 0.25) 0px 6px 12px -2px, rgba(255, 102, 0, 0.3) 0px 3px 7px -3px;
+    padding: 1rem;
+    border: 1px solid #ff7300;
+    border-radius: 5rem;
+    width: 45vw;
+    background-color: #424242;
+}
+
+@media screen and (max-width: 480px) {
+    form {
+        width: 100vh;
+    }
+}
