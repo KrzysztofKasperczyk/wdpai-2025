@@ -9,8 +9,8 @@
 </head>
 <body>
   
-    <form action="/login" method="post">
-        <h1>Login</h1>
+    <form action="/register" method="post">
+        <h1>Register</h1>
         <?php if(isset($messages)): ?>
             <p class="messages">
             <?= $messages; ?>
@@ -20,6 +20,13 @@
         <br>
         <input type="password" id="password" name="password" placeholder="password">
         <br>
+        <input type="password2" id="password" name="password" placeholder="renter password">
+
+        <input type="text" id="username" name="username" placeholder="username">
+        <br>
+        <input type="text" id="fullname" name="fullname" placeholder="full name">
+        <br>
+        
         <button type="submit">Login</button>
     </form>
 </body>
