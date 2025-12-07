@@ -23,7 +23,7 @@ class DashboardController extends AppController
         return self::$instance;
     }
 
-    public function index(?int $id)
+    public function index(?int $id = null)
     {
         // TODO wyswietli wszystkie projekty z bazy danych
         $cards = [

@@ -13,10 +13,7 @@ class Routing {
 
     public static function run(string $path) {
 
-        // 1. Rozbijanie ścieżki URL: "dashboard/123" → ["dashboard", "123"]
         $urlParts = explode('/', trim($path, '/'));
-
-        // 2. Pierwszy segment to nazwa akcji w routerze
         $routeName = $urlParts[0] ?? '';
 
         if (!array_key_exists($routeName, self::$routes)) {
@@ -24,17 +21,18 @@ class Routing {
             return;
         }
 
-        // 3. Drugi segment to opcjonalne ID (np. dashboard/123)
         $id = $urlParts[1] ?? null;
 
-        // 4. Pobranie informacji o kontrolerze i akcji
         $controllerName = self::$routes[$routeName]['controller'];
         $actionName     = self::$routes[$routeName]['action'];
 
-        // 5. Użycie singletonu zamiast new
         $controller = $controllerName::getInstance();
 
-        // 6. Wywołanie akcji z ID
-        $controller->$actionName($id);
+        // jeśli jest ID i metoda je przyjmuje
+        if ($id !== null && $routeName === 'dashboard') {
+            $controller->$actionName((int)$id);
+        } else {
+            $controller->$actionName();
+        }
     }
 }
