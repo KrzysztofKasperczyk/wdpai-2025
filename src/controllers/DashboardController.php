@@ -2,12 +2,18 @@
 
 require_once 'AppController.php';
 require_once __DIR__.'/../repository/UserRepository.php';
+require_once __DIR__.'/../repository/CardsRepository.php';
 
 class DashboardController extends AppController
 {
+    private CardsRepository $cardsRepository;
+
     private static $instance = null;
 
-    private function __construct() {}
+    private function __construct() {
+        $this->cardsRepository = new CardsRepository();
+    }
+
     private function __clone() {}
     public function __wakeup()
     {
@@ -83,6 +89,28 @@ class DashboardController extends AppController
 
         return $this->render("dashboard", ['cards' => $cards, 'users' => $users]);
     }
-//dokonczyc rejestracje i podlaczyc logowanie na podstawie linku z teams
-    
+
+    public function search(){
+        $contentType = isset($_SERVER["CONTENT_TYPE"]) ? trim($_SERVER["CONTENT_TYPE"]) : '';
+        header('Content-Type: application/json');
+
+        if (!$this->isPost){
+            http_response_code(405);
+            echo json_encode(["status" => "405", "message" => "Method Not Allowed"]);
+            return;
+        }
+
+        if ('Content-Type: application/json'){
+            http_response_code(415);
+            echo json_encode(["status" => "415", "message" => "Unsupported Media Type"]);
+            return;
+        }
+
+        $content = trim(file_get_contents("php://input"));
+        $decoded = json_decode($content, true);
+
+        http_response_code(200);
+        $cards = $this->cardsRepository->getCardsByTitle('heart');
+        echo json_encode($cards);
+    }
 }

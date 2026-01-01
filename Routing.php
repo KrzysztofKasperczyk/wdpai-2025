@@ -9,6 +9,7 @@ class Routing {
         'login'     => ['controller' => 'SecurityController',   'action' => 'login'],
         'register'  => ['controller' => 'SecurityController',   'action' => 'register'],
         'dashboard' => ['controller' => 'DashboardController',  'action' => 'index'],
+        'search-cards' => ['controller' => 'DashboardController',  'action' => 'search'],
     ];
 
     public static function run(string $path) {
