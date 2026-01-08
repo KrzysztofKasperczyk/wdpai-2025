@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="/public/styles/app.css">
+  <title>Tools - FairPick</title>
+</head>
+<body>
+  <?php include __DIR__ . '/layout-topbar.html'; ?>
+
+  <main class="container">
+    <h1 class="h1">Choose Your Tool</h1>
+    <p class="sub">Pick one of our fair and simple tools to settle things randomly.</p>
+
+    <section class="grid">
+      <a class="card" href="/tools/coin-flip">
+        <div class="icon">🪙</div>
+        <div class="title">Coin Flip</div>
+        <div class="desc">A quick 50/50 decision.</div>
+      </a>
+
+      <a class="card" href="/tools/spin-wheel">
+        <div class="icon">🎡</div>
+        <div class="title">Spin the Wheel</div>
+        <div class="desc">Perfect for multiple options.</div>
+      </a>
+
+      <a class="card" href="/tools/roll-dice">
+        <div class="icon">🎲</div>
+        <div class="title">Roll the Dice</div>
+        <div class="desc">Generate a random number.</div>
+      </a>
+    </section>
+  </main>
+</body>
+</html>

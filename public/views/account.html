@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="/public/styles/app.css">
+  <title>Account - FairPick</title>
+</head>
+<body>
+  <?php include __DIR__ . '/layout-topbar.html'; ?>
+
+  <main class="container">
+    <h1 class="h1">Account</h1>
+
+    <div class="account-card">
+      <div class="avatar"></div>
+      <div>
+        <div class="name"><?= htmlspecialchars($user['nickname'] ?? 'User') ?></div>
+        <div class="email"><?= htmlspecialchars($user['email'] ?? '') ?></div>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="statLabel">Arguments won</div>
+        <div class="statValue"><?= (int)$stats['arguments_won'] ?></div>
+      </div>
+      <div class="stat">
+        <div class="statLabel">Total draws</div>
+        <div class="statValue"><?= (int)$stats['total_draws'] ?></div>
+      </div>
+    </div>
+
+    <div class="list">
+      <a class="listItem" href="#">Friends</a>
+      <a class="listItem" href="#">Settings</a>
+      <a class="listItem danger" href="/logout">Logout</a>
+    </div>
+  </main>
+</body>
+</html>

@@ -1,0 +1,11 @@
+<nav class="topbar">
+  <div class="brand">
+    <span class="logo">⚖️</span>
+    <a href="/tools">FairPick</a>
+  </div>
+
+  <div class="navlinks">
+    <a class="<?= ($_SERVER['REQUEST_URI'] === '/tools' ? 'active' : '') ?>" href="/tools">Tools</a>
+    <a class="<?= (str_starts_with($_SERVER['REQUEST_URI'], '/account') ? 'active' : '') ?>" href="/account">Account</a>
+  </div>
+</nav>

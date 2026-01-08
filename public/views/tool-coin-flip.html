@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="/public/styles/app.css">
+  <title>Coin Flip - FairPick</title>
+</head>
+<body>
+  <?php include __DIR__ . '/layout-topbar.html'; ?>
+
+  <main class="container">
+    <h1 class="h1">Coin Flip</h1>
+    <p class="sub">Make a fair and random decision between two options.</p>
+
+    <div class="panel">
+      <div class="big-circle" id="coinResult">Heads</div>
+
+      <div class="row">
+        <button class="btn primary" id="flipBtn">Flip Coin</button>
+        <button class="btn ghost" id="inviteBtn">Invite</button>
+      </div>
+
+      <p class="hint" id="inviteHint"></p>
+    </div>
+  </main>
+
+  <script>
+    const flipBtn = document.getElementById('flipBtn');
+    const coinResult = document.getElementById('coinResult');
+    const inviteBtn = document.getElementById('inviteBtn');
+    const inviteHint = document.getElementById('inviteHint');
+
+    flipBtn.addEventListener('click', () => {
+      coinResult.textContent = (Math.random() < 0.5) ? 'Heads' : 'Tails';
+    });
+
+    inviteBtn.addEventListener('click', async () => {
+      // na MVP tylko mock link; potem zrobimy /session/create
+      const url = location.origin + '/session/EXAMPLE';
+      await navigator.clipboard.writeText(url);
+      inviteHint.textContent = 'Invite link copied: ' + url;
+    });
+  </script>
+</body>
+</html>

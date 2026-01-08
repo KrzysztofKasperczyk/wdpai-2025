@@ -1,60 +1,112 @@
 <?php
-require_once 'repository.php';
 
-class UserRepository extends Repository {
+require_once __DIR__ . '/repository.php';
 
-    public function getUsers(): array
+class UserRepository extends Repository
+{
+    public function getUserById(int $id): ?array
     {
-        $query = $this->database->connect()->prepare('
+        $stmt = $this->database->connect()->prepare('
             SELECT id, nickname, email, avatar_url, created_at
             FROM users
+            WHERE id = :id
+            LIMIT 1
         ');
-        $query->execute();
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
 
-        $users = $query->fetchAll(PDO::FETCH_ASSOC);
-        $query = null;
-        return $users ?: [];
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stmt = null;
+
+        return $user ?: null;
     }
-    
+
     public function getUserByEmail(string $email): ?array
     {
-        $query = $this->database->connect()->prepare('
-            SELECT * FROM users WHERE email = :email
+        $stmt = $this->database->connect()->prepare('
+            SELECT *
+            FROM users
+            WHERE email = :email
+            LIMIT 1
         ');
-        $query->bindParam(':email', $email);
-        $query->execute();
-        $user = $query->fetch(PDO::FETCH_ASSOC);
-        $query = null;
+        $stmt->bindParam(':email', $email, PDO::PARAM_STR);
+        $stmt->execute();
+
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stmt = null;
+
         return $user ?: null;
     }
 
     public function getUserByNickname(string $nickname): ?array
     {
-        $query = $this->database->connect()->prepare('
-            SELECT * FROM users WHERE nickname = :nickname
+        $stmt = $this->database->connect()->prepare('
+            SELECT *
+            FROM users
+            WHERE nickname = :nickname
+            LIMIT 1
         ');
-        $query->bindParam(':nickname', $nickname);
-        $query->execute();
-        $user = $query->fetch(PDO::FETCH_ASSOC);
-        $query = null;
+        $stmt->bindParam(':nickname', $nickname, PDO::PARAM_STR);
+        $stmt->execute();
+
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stmt = null;
+
         return $user ?: null;
     }
 
-    public function createUser(
-        string $nickname, 
-        string $email, 
-        string $password
-    ): void {
-        $query = $this->database->connect()->prepare('
-            INSERT INTO users (nickname, email, password)
-            VALUES (:nickname, :email, :password)
-        ');
+    /**
+     * Tworzy użytkownika i zwraca jego ID
+     */
+    public function createUser(string $nickname, string $email, string $password): int
+    {
         $hash = password_hash($password, PASSWORD_BCRYPT);
 
-        $query->bindParam(':nickname', $nickname);
-        $query->bindParam(':email', $email);
-        $query->bindParam(':password', $hash);
-        $query->execute();
-        $query = null;
+        $stmt = $this->database->connect()->prepare('
+            INSERT INTO users (nickname, email, password)
+            VALUES (:nickname, :email, :password)
+            RETURNING id
+        ');
+        $stmt->bindParam(':nickname', $nickname, PDO::PARAM_STR);
+        $stmt->bindParam(':email', $email, PDO::PARAM_STR);
+        $stmt->bindParam(':password', $hash, PDO::PARAM_STR);
+
+        $stmt->execute();
+        $id = (int)$stmt->fetchColumn();
+        $stmt = null;
+
+        // (opcjonalnie) od razu tworzymy rekord stats
+        $this->ensureUserStatsRow($id);
+
+        return $id;
+    }
+
+    /**
+     * Tworzy pusty rekord user_stats, jeśli go nie ma
+     */
+    private function ensureUserStatsRow(int $userId): void
+    {
+        $stmt = $this->database->connect()->prepare('
+            INSERT INTO user_stats (user_id)
+            VALUES (:user_id)
+            ON CONFLICT (user_id) DO NOTHING
+        ');
+        $stmt->bindParam(':user_id', $userId, PDO::PARAM_INT);
+        $stmt->execute();
+        $stmt = null;
+    }
+
+    public function getUsers(): array
+    {
+        $stmt = $this->database->connect()->prepare('
+            SELECT id, nickname, email, avatar_url, created_at
+            FROM users
+            ORDER BY id DESC
+        ');
+        $stmt->execute();
+        $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $stmt = null;
+
+        return $users ?: [];
     }
 }
