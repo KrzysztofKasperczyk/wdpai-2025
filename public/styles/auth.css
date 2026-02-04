@@ -1,0 +1,160 @@
+:root{
+  --bg:#f4f6fb;
+  --card:#ffffff;
+  --text:#111827;
+  --muted:#6b7280;
+  --primary:#4f6ef7;
+  --radius:16px;
+}
+
+*{ box-sizing:border-box; }
+
+body{
+  margin:0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* Wyśrodkowanie */
+.auth-page{
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px 18px 40px;
+}
+
+/* Karta */
+.auth-card{
+  width: 100%;
+  max-width: 460px;
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 26px;
+  box-shadow: 0 12px 30px rgba(15,23,42,.10);
+}
+
+/* Brand */
+.auth-brand{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom: 14px;
+}
+
+.auth-logo{
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  background:#e9edff;
+  display:grid;
+  place-items:center;
+  font-size:18px;
+}
+
+.auth-name{
+  font-weight: 900;
+  font-size: 18px;
+  letter-spacing: -0.01em;
+}
+
+/* Teksty */
+.auth-title{
+  margin: 8px 0 6px;
+  font-size: 34px;
+  letter-spacing: -0.02em;
+}
+
+.auth-sub{
+  margin: 0 0 18px;
+  color: var(--muted);
+}
+
+/* Komunikat */
+.auth-alert{
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #fff7ed;
+  color: #9a3412;
+  font-weight: 700;
+  margin-bottom: 14px;
+}
+
+/* Formularz */
+.auth-form{
+  display:grid;
+  gap: 12px;
+}
+
+.auth-field{
+  display:grid;
+  gap: 6px;
+}
+
+.auth-label{
+  font-weight: 800;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--muted);
+}
+
+/* Inputy */
+.auth-input{
+  background: var(--card);
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-weight: 700;
+  outline: none;
+}
+
+.auth-input:focus{
+  border-color: #dbe2ff;
+}
+
+/* Przyciski */
+.auth-actions{
+  display:grid;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.auth-btn{
+  border:0;
+  border-radius:12px;
+  padding:12px 16px;
+  font-weight:800;
+  cursor:pointer;
+  width: 100%;
+}
+
+.auth-btn.primary{
+  background: var(--primary);
+  color: white;
+}
+
+.auth-linkbtn{
+  display:inline-grid;
+  place-items:center;
+  text-decoration:none;
+  width: 100%;
+  border-radius:12px;
+  padding:12px 16px;
+  font-weight:800;
+  border:2px solid #dbe2ff;
+  color: var(--primary);
+  background: transparent;
+}
+
+/* Mobile */
+@media (max-width: 780px){
+  .auth-card{ padding: 20px; }
+  .auth-title{ font-size: 28px; }
+}
+
+/* Bardzo małe ekrany */
+@media (max-width: 380px){
+  .auth-card{ padding: 16px; }
+  .auth-title{ font-size: 24px; }
+}
