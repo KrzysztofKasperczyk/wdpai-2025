@@ -1,37 +1,56 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" type="text/css" href="/public/styles/main.css">
-    <link rel="stylesheet" type="text/css" href="/public/styles/login.css">
-    <title>Register</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="/public/styles/app.css">
+  <title>Register - FairPick</title>
 </head>
 <body>
-    <form action="/register" method="post">
-        <h1>Register</h1>
 
-        <?php if(isset($messages)): ?>
-            <p class="messages">
-                <?= $messages; ?>
-            </p>
-        <?php endif; ?>
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <div class="logo">⚖️</div>
+      <div class="name">FairPick</div>
+    </div>
 
-        <input type="email" id="email" name="email" placeholder="email">
-        <br>
+    <h1 class="auth-title">Register</h1>
+    <p class="auth-sub">Create your account to start using the tools.</p>
 
-        <input type="password" id="password" name="password" placeholder="password">
-        <br>
+    <?php if (isset($messages) && $messages): ?>
+      <div class="alert"><?= htmlspecialchars($messages) ?></div>
+    <?php endif; ?>
 
-        <input type="password" id="password2" name="password2" placeholder="repeat password">
-        <br>
+    <form class="form" action="/register" method="post" autocomplete="on">
+      <div class="field">
+        <div class="label">Nickname</div>
+        <input class="input" type="text" id="username" name="username" placeholder="Your nickname" required />
+      </div>
 
-        <input type="text" id="username" name="username" placeholder="username (nickname)">
-        <br>
+      <div class="field">
+        <div class="label">Email</div>
+        <input class="input" type="email" id="email" name="email" placeholder="email@example.com" required />
+      </div>
 
-        <br>
-        
-        <button type="submit">Register</button>
+      <div class="field">
+        <div class="label">Password</div>
+        <input class="input" type="password" id="password" name="password" placeholder="••••••••" required />
+      </div>
+
+      <div class="field">
+        <div class="label">Repeat password</div>
+        <input class="input" type="password" id="password2" name="password2" placeholder="••••••••" required />
+      </div>
+
+      <div class="auth-actions">
+        <button class="btn primary" type="submit">Create account</button>
+
+        <a class="btn ghost btn-link" href="/login">I already have an account</a>
+      </div>
     </form>
+  </div>
+</div>
+
 </body>
 </html>
