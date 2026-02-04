@@ -44,6 +44,11 @@
         <input class="auth-input" type="password" id="password" name="password"
        value="<?= htmlspecialchars($old['password'] ?? '') ?>"
        placeholder="••••••••" required />
+       <div class="auth-toggle">
+        <input type="checkbox" id="showPassword">
+        <label for="showPassword">Show password</label>
+       </div>
+
       </div>
 
       <div class="auth-field">
@@ -51,6 +56,11 @@
         <input class="auth-input" type="password" id="password2" name="password2"
        value="<?= htmlspecialchars($old['password2'] ?? '') ?>"
        placeholder="••••••••" required />
+       <div class="auth-toggle">
+        <input type="checkbox" id="showPassword2">
+        <label for="showPassword2">Show repeat password</label>
+       </div>
+
       </div>
 
       <div class="auth-actions">
@@ -58,7 +68,7 @@
         <a class="auth-linkbtn" href="/login">I already have an account</a>
       </div>
     </form>
-    
+
     <?php if (is_array($pwRules)): ?>
   <div class="pw-rules">
     <div class="pw-rules-title">Password requirements:</div>
@@ -74,6 +84,7 @@
 
   </div>
 </div>
+<script src="/public/scripts/auth.js" defer></script>
 
 </body>
 </html>

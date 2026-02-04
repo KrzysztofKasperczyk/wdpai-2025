@@ -6,6 +6,7 @@
   <link rel="stylesheet" href="/public/styles/auth.css">
   <title>Login - FairPick</title>
 </head>
+
 <body>
 
 <div class="auth-page">
@@ -36,6 +37,11 @@
         <input class="auth-input" type="password" id="password" name="password"
        value="<?= htmlspecialchars($old['password'] ?? '') ?>"
        placeholder="••••••••" required />
+       <div class="auth-toggle">
+        <input type="checkbox" id="showPassword">
+        <label for="showPassword">Show password</label>
+       </div>
+
       </div>
 
       <div class="auth-actions">
@@ -46,5 +52,6 @@
   </div>
 </div>
 
+<script src="/public/scripts/auth.js" defer></script>
 </body>
 </html>

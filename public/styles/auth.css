@@ -200,3 +200,24 @@ body{
   border-color: #fecaca;
   color: #7f1d1d;
 }
+
+.auth-toggle{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-top: 6px;
+  user-select:none;
+}
+
+.auth-toggle input[type="checkbox"]{
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+.auth-toggle label{
+  font-weight: 800;
+  color: var(--muted);
+  cursor: pointer;
+}
