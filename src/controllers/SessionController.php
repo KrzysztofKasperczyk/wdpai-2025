@@ -29,7 +29,7 @@ class SessionController extends AppController
         $this->requireAuth();
 
         $game = $_GET['game'] ?? null;
-        if (!in_array($game, ['coin_flip', 'roll_dice', 'spin_wheel'], true)) {
+        if (!in_array($game, ['coin_flip', 'roll_dice'], true)) {
             $this->redirect('/tools');
         }
 

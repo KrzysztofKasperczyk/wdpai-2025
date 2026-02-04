@@ -26,12 +26,6 @@ class ToolsController extends AppController
         return $this->render('tool-coin-flip');
     }
 
-    public function spinWheel()
-    {
-        $this->requireAuth();
-        return $this->render('tool-spin-wheel');
-    }
-
     public function rollDice()
     {
         $this->requireAuth();

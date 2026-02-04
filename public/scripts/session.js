@@ -19,7 +19,6 @@
   // label przycisku
   if (gameType === 'coin_flip') actionBtn.textContent = 'Flip coin';
   if (gameType === 'roll_dice') actionBtn.textContent = 'Roll dice';
-  if (gameType === 'spin_wheel') actionBtn.textContent = 'Spin wheel';
 
   copyBtn?.addEventListener('click', async () => {
     try {
@@ -98,13 +97,6 @@
       return;
     }
 
-    if (gameType === 'spin_wheel') {
-      const options = ['A', 'B', 'C', 'D']; // na razie stałe
-      const { ok, data } = await postJson('/api/wheel/spin', { session_id: sessionId, options });
-      if (!ok) return (hint.textContent = data.error || 'Error');
-      resultCircle.textContent = data.result;
-      return;
-    }
   }
 
   actionBtn.addEventListener('click', doAction);

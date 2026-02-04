@@ -17,7 +17,6 @@ class Routing {
 
         'tools'     => ['controller' => 'ToolsController',   'action' => 'index'],
         'coin-flip' => ['controller' => 'ToolsController',   'action' => 'coinFlip'],
-        'spin-wheel'=> ['controller' => 'ToolsController',   'action' => 'spinWheel'],
         'roll-dice' => ['controller' => 'ToolsController',   'action' => 'rollDice'],
 
         'account'   => ['controller' => 'AccountController', 'action' => 'index'],
@@ -67,12 +66,6 @@ class Routing {
                 return;
             }
 
-            // POST /api/wheel/spin
-            if ($resource === 'wheel' && $action === 'spin') {
-                $api->wheelSpin();
-                return;
-            }
-
             http_response_code(404);
             header('Content-Type: application/json');
             echo json_encode(['error' => 'API route not found']);
@@ -83,7 +76,6 @@ class Routing {
         if ($routeName === 'tools') {
             $sub = $urlParts[1] ?? '';
             if ($sub === 'coin-flip') $routeName = 'coin-flip';
-            elseif ($sub === 'spin-wheel') $routeName = 'spin-wheel';
             elseif ($sub === 'roll-dice') $routeName = 'roll-dice';
         }
 
