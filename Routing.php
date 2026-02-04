@@ -3,6 +3,8 @@
 require_once __DIR__ . '/src/controllers/SecurityController.php';
 require_once __DIR__ . '/src/controllers/ToolsController.php';
 require_once __DIR__ . '/src/controllers/AccountController.php';
+require_once __DIR__ . '/src/controllers/SessionController.php';
+require_once __DIR__ . '/src/controllers/GameApiController.php';
 
 class Routing {
 
@@ -19,14 +21,65 @@ class Routing {
         'roll-dice' => ['controller' => 'ToolsController',   'action' => 'rollDice'],
 
         'account'   => ['controller' => 'AccountController', 'action' => 'index'],
+
     ];
 
-    public static function run(string $path) {
-
+    public static function run(string $path)
+    {
         $urlParts = explode('/', trim($path, '/'));
         $routeName = $urlParts[0] ?? '';
 
-        // /tools/coin-flip -> mapujemy na routeName = tools, a drugi segment wybiera akcję
+        // ✅ /session/create -> SessionController::create()
+        if ($routeName === 'session' && (($urlParts[1] ?? '') === 'create')) {
+            $controller = SessionController::getInstance();
+            $controller->create();
+            return;
+        }
+
+        // ✅ /session/{uuid} -> SessionController::view($uuid)
+        if ($routeName === 'session' && isset($urlParts[1]) && ($urlParts[1] ?? '') !== '') {
+            $controller = SessionController::getInstance();
+            $controller->view($urlParts[1]);
+            return;
+        }
+
+        // ✅ API: /api/...
+        if ($routeName === 'api') {
+            $api = GameApiController::getInstance();
+            $resource = $urlParts[1] ?? '';
+            $action = $urlParts[2] ?? '';
+
+            // GET /api/session/latest
+            if ($resource === 'session' && $action === 'latest') {
+                $api->latest();
+                return;
+            }
+
+            // POST /api/coin-flip/flip
+            if ($resource === 'coin-flip' && $action === 'flip') {
+                $api->coinFlip();
+                return;
+            }
+
+            // POST /api/dice/roll
+            if ($resource === 'dice' && $action === 'roll') {
+                $api->diceRoll();
+                return;
+            }
+
+            // POST /api/wheel/spin
+            if ($resource === 'wheel' && $action === 'spin') {
+                $api->wheelSpin();
+                return;
+            }
+
+            http_response_code(404);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'API route not found']);
+            return;
+        }
+
+        // 🔹 MAPOWANIE: /tools/* -> konkretne akcje
         if ($routeName === 'tools') {
             $sub = $urlParts[1] ?? '';
             if ($sub === 'coin-flip') $routeName = 'coin-flip';
@@ -44,5 +97,7 @@ class Routing {
 
         $controller = $controllerName::getInstance();
         $controller->$actionName();
+
     }
+
 }

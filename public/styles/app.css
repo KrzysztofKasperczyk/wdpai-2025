@@ -140,3 +140,16 @@ body{
   .navlinks{gap:12px}
   .container{margin-top:14px}
 }
+
+.input{
+  background: var(--card);
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-weight: 700;
+  outline: none;
+}
+.input:focus{
+  border-color: #dbe2ff;
+}
+

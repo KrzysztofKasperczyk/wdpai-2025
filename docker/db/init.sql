@@ -164,3 +164,39 @@ SET total_draws = total_draws + 1,
     losses = losses + 1,
     last_activity = CURRENT_TIMESTAMP
 WHERE user_id = 2;
+
+
+------------------------------------------------------------
+-- GAME_SESSIONS: wspólna sesja gry (invite link)
+------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS game_sessions (
+    id UUID PRIMARY KEY,
+    game_type VARCHAR(30) NOT NULL
+        CHECK (game_type IN ('coin_flip', 'roll_dice', 'spin_wheel')),
+    created_by INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    status VARCHAR(20) DEFAULT 'active'
+        CHECK (status IN ('active', 'finished')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+------------------------------------------------------------
+-- GAME_SESSION_PARTICIPANTS: uczestnicy sesji
+------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS game_session_participants (
+    id SERIAL PRIMARY KEY,
+    session_id UUID NOT NULL REFERENCES game_sessions(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (session_id, user_id)
+);
+
+------------------------------------------------------------
+-- GAME_SESSION_EVENTS: zdarzenia (wyniki losowań)
+------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS game_session_events (
+    id SERIAL PRIMARY KEY,
+    session_id UUID NOT NULL REFERENCES game_sessions(id) ON DELETE CASCADE,
+    event_type VARCHAR(30) NOT NULL,
+    payload JSONB,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
