@@ -158,3 +158,45 @@ body{
   .auth-card{ padding: 16px; }
   .auth-title{ font-size: 24px; }
 }
+
+.pw-rules{
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #eef2ff;
+}
+
+.pw-rules-title{
+  font-weight: 900;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.pw-rules-list{
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.pw-rule{
+  font-weight: 800;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 2px solid #e5e7eb;
+}
+
+.pw-rule.ok{
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #065f46;
+}
+
+.pw-rule.bad{
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #7f1d1d;
+}

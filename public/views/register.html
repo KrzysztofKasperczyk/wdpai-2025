@@ -10,6 +10,8 @@
 
 <div class="auth-page">
   <div class="auth-card">
+    <?php $old = $old ?? []; ?>
+    <?php $pwRules = $pwRules ?? null; ?>
     <div class="auth-brand">
       <div class="auth-logo">⚖️</div>
       <div class="auth-name">FairPick</div>
@@ -25,22 +27,30 @@
     <form class="auth-form" action="/register" method="post" autocomplete="on">
       <div class="auth-field">
         <div class="auth-label">Nickname</div>
-        <input class="auth-input" type="text" id="username" name="username" placeholder="Your nickname" required />
+        <input class="auth-input" type="text" id="username" name="username"
+       value="<?= htmlspecialchars($old['username'] ?? '') ?>"
+       placeholder="Your nickname" required />
       </div>
 
       <div class="auth-field">
         <div class="auth-label">Email</div>
-        <input class="auth-input" type="email" id="email" name="email" placeholder="email@example.com" required />
+        <input class="auth-input" type="email" id="email" name="email"
+       value="<?= htmlspecialchars($old['email'] ?? '') ?>"
+       placeholder="email@example.com" required />
       </div>
 
       <div class="auth-field">
         <div class="auth-label">Password</div>
-        <input class="auth-input" type="password" id="password" name="password" placeholder="••••••••" required />
+        <input class="auth-input" type="password" id="password" name="password"
+       value="<?= htmlspecialchars($old['password'] ?? '') ?>"
+       placeholder="••••••••" required />
       </div>
 
       <div class="auth-field">
         <div class="auth-label">Repeat password</div>
-        <input class="auth-input" type="password" id="password2" name="password2" placeholder="••••••••" required />
+        <input class="auth-input" type="password" id="password2" name="password2"
+       value="<?= htmlspecialchars($old['password2'] ?? '') ?>"
+       placeholder="••••••••" required />
       </div>
 
       <div class="auth-actions">
@@ -48,6 +58,20 @@
         <a class="auth-linkbtn" href="/login">I already have an account</a>
       </div>
     </form>
+    
+    <?php if (is_array($pwRules)): ?>
+  <div class="pw-rules">
+    <div class="pw-rules-title">Password requirements:</div>
+    <ul class="pw-rules-list">
+      <?php foreach ($pwRules as $rule): ?>
+        <li class="pw-rule <?= $rule['ok'] ? 'ok' : 'bad' ?>">
+          <?= htmlspecialchars($rule['label']) ?>
+        </li>
+      <?php endforeach; ?>
+    </ul>
+  </div>
+<?php endif; ?>
+
   </div>
 </div>
 
