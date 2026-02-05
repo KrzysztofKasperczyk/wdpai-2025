@@ -17,6 +17,7 @@
   data-game-type="<?= htmlspecialchars($session['game_type']) ?>"
   data-invite-link="<?= htmlspecialchars($inviteLink) ?>"
   data-current-user-id="<?= (int)$currentUserId ?>"
+  data-is-host="<?= $isHost ? '1' : '0' ?>"
 >
   <h1 class="h1">Game session</h1>
 
@@ -64,6 +65,10 @@
 
     <p class="hint" id="hint"></p>
   
+    <?php if (!$isHost): ?>
+  <p class="hint">Observer mode — waiting for the host to act.</p>
+<?php endif; ?>
+
   </div>
     <div class="panel" style="margin-top: 16px;">
     <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">

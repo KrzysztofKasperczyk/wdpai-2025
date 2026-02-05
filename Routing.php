@@ -53,7 +53,7 @@ class Routing {
                 $api->latest();
                 return;
             }
-            
+
             // GET /api/session/participants
             if ($resource === 'session' && $action === 'participants') {
                 $api->participants();
@@ -72,7 +72,17 @@ class Routing {
                 return;
             }
 
-            
+            // POST /api/session/ping
+            if ($resource === 'session' && $action === 'ping') {
+                $api->ping();
+                return;
+            }
+
+            // POST /api/session/leave
+            if ($resource === 'session' && $action === 'leave') {
+                $api->leave();
+                return;
+            }
 
             http_response_code(404);
             header('Content-Type: application/json');

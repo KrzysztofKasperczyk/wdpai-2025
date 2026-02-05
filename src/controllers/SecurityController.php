@@ -198,6 +198,11 @@ class SecurityController extends AppController
             );
         }
 
+        if (isset($_SESSION['user_id'])) {
+            $repo = new GameSessionRepository();
+            $repo->leaveAllSessions((int)$_SESSION['user_id']);
+        }
+        
         session_destroy();
         $this->redirect('/login');
     }

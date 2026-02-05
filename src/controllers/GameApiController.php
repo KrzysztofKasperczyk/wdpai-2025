@@ -72,6 +72,7 @@ class GameApiController extends AppController
             $this->json(['error' => 'wrong game type for this endpoint'], 400);
         }
 
+        $this->requireHost($session);
         $result = (random_int(0, 1) === 0) ? 'heads' : 'tails';
 
         $payload = [
@@ -116,6 +117,7 @@ class GameApiController extends AppController
             $this->json(['error' => 'wrong game type for this endpoint'], 400);
         }
 
+        $this->requireHost($session);
         $result = random_int(1, $sides);
 
         $payload = [
@@ -155,5 +157,57 @@ class GameApiController extends AppController
         ], 200);
     }
 
+    public function ping(): void
+    {
+        $this->requireAuth();
+
+        if (!$this->isPost()) {
+            $this->json(['error' => 'Method Not Allowed'], 405);
+        }
+
+        $data = $this->getJsonBody();
+        $sessionId = $data['session_id'] ?? '';
+        if ($sessionId === '') {
+            $this->json(['error' => 'session_id is required'], 400);
+        }
+
+        $session = $this->sessionRepo->findById($sessionId);
+        if (!$session) {
+            $this->json(['error' => 'session not found'], 404);
+        }
+
+        $this->sessionRepo->touchParticipant($sessionId, (int)$_SESSION['user_id']);
+        $this->json(['ok' => true], 200);
+    }
+
+    public function leave(): void
+    {
+        $this->requireAuth();
+
+        if (!$this->isPost()) {
+            $this->json(['error' => 'Method Not Allowed'], 405);
+        }
+
+        $data = $this->getJsonBody();
+        $sessionId = $data['session_id'] ?? '';
+        if ($sessionId === '') {
+            $this->json(['error' => 'session_id is required'], 400);
+        }
+
+        $this->sessionRepo->leaveSession($sessionId, (int)$_SESSION['user_id']);
+        $this->json(['ok' => true], 200);
+    }
+
+    private function requireHost(array $session): void
+    {
+        $uid = (int)($_SESSION['user_id'] ?? 0);
+        if ($uid <= 0) {
+            $this->json(['error' => 'unauthorized'], 401);
+        }
+
+        if ((int)$session['created_by'] !== $uid) {
+            $this->json(['error' => 'Only the host can perform this action'], 403);
+        }
+    }
 
 }

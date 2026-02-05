@@ -23,6 +23,8 @@
   const participantsList = document.getElementById('participantsList');
   const participantsCount = document.getElementById('participantsCount');
 
+  const isHost = (root.dataset.isHost || '0') === '1';
+
   if (!sessionId) return;
 
   // Label przycisku w zależności od gry
@@ -52,6 +54,56 @@
   }
 
   // -------------------------
+  // Presence: heartbeat + leave
+  // -------------------------
+  async function ping() {
+    try {
+      await fetch('/api/session/ping', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sessionId }),
+      });
+    } catch (e) {
+      // cisza
+    }
+  }
+
+  function leaveNow() {
+    try {
+      const payload = JSON.stringify({ session_id: sessionId });
+      const blob = new Blob([payload], { type: 'application/json' });
+
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon('/api/session/leave', blob);
+      } else {
+        // fallback (niezbyt pewny przy unload, ale lepsze niż nic)
+        fetch('/api/session/leave', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: payload,
+          keepalive: true,
+        }).catch(() => {});
+      }
+    } catch (e) {
+      // cisza
+    }
+  }
+
+  // typowo działa przy zamknięciu karty / przejściu na inną stronę
+  window.addEventListener('beforeunload', leaveNow);
+
+  // działa przy przejściu karty w tło (mobilki też)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      leaveNow();
+    } else {
+      // wrócił na kartę -> odśwież presence szybciej
+      ping();
+      pollParticipants();
+    }
+  });
+
+  // -------------------------
   // Dice UI
   // -------------------------
   function initDiceUI() {
@@ -59,6 +111,12 @@
     if (!diceSettings || !dicePreset || !diceCustom || !dicePresetLabel) return;
 
     diceSettings.style.display = 'block';
+
+    if (!isHost) {
+      dicePreset.disabled = true;
+      diceCustom.disabled = true;
+    }
+
 
     function sync() {
       const val = dicePreset.value;
@@ -70,6 +128,13 @@
         diceCustom.style.display = 'none';
         dicePresetLabel.textContent = 'D' + val;
       }
+
+      if (!isHost && actionBtn) {
+        actionBtn.disabled = true;
+        actionBtn.classList.add('disabled');
+        if (hint) hint.textContent = 'You are an observer in this session.';
+      }
+
     }
 
     dicePreset.addEventListener('change', sync);
@@ -99,6 +164,11 @@
   // Game action
   // -------------------------
   async function doAction() {
+    if (!isHost) {
+      if (hint) hint.textContent = 'Only the host can control the game.';
+      return;
+  }
+
     if (hint) hint.textContent = '';
 
     if (gameType === 'coin_flip') {
@@ -162,6 +232,15 @@
     if (!participantsList) return;
 
     participantsList.innerHTML = '';
+
+    if (!Array.isArray(list) || list.length === 0) {
+      const li = document.createElement('li');
+      li.className = 'hint';
+      li.textContent = 'No active participants';
+      participantsList.appendChild(li);
+      if (participantsCount) participantsCount.textContent = '0 participants';
+      return;
+    }
 
     list.forEach((p) => {
       const li = document.createElement('li');
@@ -247,11 +326,15 @@
   // -------------------------
   initDiceUI();
 
-  // pierwsze pobranie
+  // pierwsze pobranie (i presence)
+  ping();
   pollLatest();
   pollParticipants();
 
-  // jeden timer na wszystko (czyściej)
+  // heartbeat: co 5s
+  setInterval(ping, 5000);
+
+  // polling UI: co 2s
   setInterval(() => {
     pollLatest();
     pollParticipants();
