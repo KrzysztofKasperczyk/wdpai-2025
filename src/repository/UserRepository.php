@@ -109,4 +109,18 @@ class UserRepository extends Repository
 
         return $users ?: [];
     }
+
+    public function getStatsByUserId(int $userId): array
+    {
+        $q = $this->database->connect()->prepare('
+            SELECT total_draws, wins
+            FROM user_stats
+            WHERE user_id = :uid
+        ');
+        $q->execute([':uid' => $userId]);
+        $row = $q->fetch(PDO::FETCH_ASSOC);
+
+        return $row ?: ['total_draws' => 0, 'wins' => 0];
+    }
+
 }
