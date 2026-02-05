@@ -24,10 +24,24 @@ abstract class AppController
      */
     protected function requireAuth(): void
     {
-        if (!isset($_SESSION['user_id'])) {
-            header('Location: /login');
-            exit();
+            if (isset($_SESSION['user_id'])) {
+            return;
         }
+
+        $uri = $_SERVER['REQUEST_URI'] ?? '/tools';
+
+        // Nie zapisuj redirectu dla stron logowania/rejestracji/wylogowania
+        // (to najczęstsza przyczyna pętli przekierowań)
+        $isAuthPage =
+            str_starts_with($uri, '/login') ||
+            str_starts_with($uri, '/register') ||
+            str_starts_with($uri, '/logout');
+
+        if (!$isAuthPage) {
+            $_SESSION['redirect_after_login'] = $uri;
+        }
+
+        $this->redirect('/login');
     }
 
     /**
