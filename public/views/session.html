@@ -26,38 +26,6 @@
 
     <div class="big-circle" id="resultCircle">—</div>
 
-    <!-- Dice UI (pokazuje się tylko dla roll_dice przez JS) -->
-    <div id="diceSettings" style="display:none; margin: 0 auto 14px; max-width: 420px;">
-      <div style="display:flex; gap:12px; align-items:center; justify-content:center; flex-wrap:wrap;">
-        <label style="font-weight:700; color: var(--muted);">Sides</label>
-
-        <select id="dicePreset" class="input">
-          <option value="4">D4</option>
-          <option value="6" selected>D6</option>
-          <option value="8">D8</option>
-          <option value="10">D10</option>
-          <option value="12">D12</option>
-          <option value="20">D20</option>
-          <option value="100">D100</option>
-          <option value="custom">Custom</option>
-        </select>
-
-        <input
-          id="diceCustom"
-          class="input"
-          type="number"
-          min="2"
-          max="1000"
-          placeholder="2–1000"
-          style="width:140px; display:none;"
-        />
-      </div>
-
-      <p class="hint" style="margin-top:10px;">
-        Preset: <span id="dicePresetLabel">D6</span>
-      </p>
-    </div>
-
     <div class="row" style="flex-wrap:wrap;">
       <button class="btn primary" id="actionBtn">Action</button>
       <button class="btn ghost" id="copyLink">Copy invite link</button>
