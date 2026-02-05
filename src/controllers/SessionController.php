@@ -55,6 +55,8 @@ class SessionController extends AppController
         }
 
         $this->repository->addParticipant($uuid, (int)$_SESSION['user_id']);
+        $this->repository->ensureCoinChoiceOnJoin($uuid, (int)$_SESSION['user_id']);
+
 
         $isHost = ((int)$session['created_by'] === (int)$_SESSION['user_id']);
         $this->render('session', [

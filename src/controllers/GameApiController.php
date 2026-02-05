@@ -75,18 +75,19 @@ class GameApiController extends AppController
         $this->requireHost($session);
         $result = (random_int(0, 1) === 0) ? 'heads' : 'tails';
 
+        $round = $this->sessionRepo->processCoinFlipRound($sessionId, $result);
+        $winnerId = $round['winner_id'] ?? null;
+
         $payload = [
-            'result' => $result,
-            'by_user_id' => (int)$_SESSION['user_id']
+        'result' => $result,
+        'by_user_id' => (int)$_SESSION['user_id'],
+        'winner_id' => $winnerId
         ];
 
         $eventId = $this->eventRepo->createEvent($sessionId, 'coin_flip', $payload);
 
-        $this->json([
-            'ok' => true,
-            'event_id' => $eventId,
-            'result' => $result
-        ], 200);
+        $this->json(['ok'=>true,'event_id'=>$eventId,'result'=>$result,'winner_id'=>$winnerId], 200);
+
     }
 
     /**

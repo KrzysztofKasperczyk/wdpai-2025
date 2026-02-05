@@ -178,6 +178,7 @@
         return;
       }
       if (resultCircle) resultCircle.textContent = data.result;
+      pollParticipants(true);
       return;
     }
 
@@ -209,6 +210,7 @@
 
       if (lastEventId === ev.id) return;
       lastEventId = ev.id;
+      pollParticipants(true);
 
       let payload = ev.payload;
       if (typeof payload === 'string') {
@@ -218,6 +220,18 @@
       if (payload && payload.result !== undefined) {
         if (resultCircle) resultCircle.textContent = payload.result;
       }
+      // winner komunikat dla wszystkich
+      if (payload && payload.winner_id) {
+        const wid = parseInt(payload.winner_id, 10);
+
+        // spróbuj znaleźć nick zwycięzcy w aktualnej liście DOM (na szybko)
+        // (lepsza wersja: trzymać ostatnią listę participants w zmiennej — ale to już optional)
+        if (hint) hint.textContent = `Winner decided! (user #${wid})`;
+
+        // po winnerze wymuś odświeżenie listy uczestników, żeby zobaczyć zielonego
+        pollParticipants();
+      }
+
     } catch (e) {
       // cisza
     }
@@ -242,7 +256,15 @@
       return;
     }
 
+    // helper: normalize is_host (postgres potrafi zwrócić true/false, "t"/"f", 1/0)
+    const isHostFlag = (v) => v === true || v === 1 || v === '1' || v === 't' || v === 'true';
+
     list.forEach((p) => {
+      const uid = parseInt(p.id, 10);
+      const nick = (p.nickname || '?').toString();
+      const status = (p.status || 'active').toString(); // active/eliminated/winner
+      const choice = (p.coin_choice || '').toString();  // heads/tails/''
+
       const li = document.createElement('li');
       li.style.display = 'flex';
       li.style.alignItems = 'center';
@@ -253,6 +275,7 @@
       li.style.borderRadius = '14px';
       li.style.background = 'rgba(255,255,255,0.7)';
 
+      // LEFT: avatar + name
       const left = document.createElement('div');
       left.style.display = 'flex';
       left.style.alignItems = 'center';
@@ -267,7 +290,6 @@
       avatar.style.placeItems = 'center';
       avatar.style.fontWeight = '900';
 
-      const nick = (p.nickname || '?').toString();
       avatar.textContent = nick.slice(0, 1).toUpperCase();
 
       if (p.avatar_url) {
@@ -277,24 +299,79 @@
         avatar.style.backgroundPosition = 'center';
       }
 
+      const nameWrap = document.createElement('div');
+      nameWrap.style.display = 'flex';
+      nameWrap.style.flexDirection = 'column';
+      nameWrap.style.gap = '2px';
+
       const name = document.createElement('div');
       name.style.fontWeight = '900';
       name.textContent = nick || 'Unknown';
 
-      left.appendChild(avatar);
-      left.appendChild(name);
-
-      const right = document.createElement('div');
-      right.className = 'hint';
-      right.style.whiteSpace = 'nowrap';
-      if (parseInt(p.id, 10) === currentUserId) {
-        right.textContent = 'You';
-      } else {
-        right.textContent = '';
+      // kolory statusów
+      if (status === 'eliminated') {
+        name.style.color = '#dc2626'; // czerwony
       }
+      if (status === 'winner') {
+        name.style.color = '#16a34a'; // zielony
+      }
+
+      const sub = document.createElement('div');
+      sub.className = 'hint';
+      sub.style.lineHeight = '1.1';
+
+      const tags = [];
+      if (uid === currentUserId) tags.push('You');
+      if (isHostFlag(p.is_host)) tags.push('Host');
+      if (status === 'eliminated') tags.push('Eliminated');
+      if (status === 'winner') tags.push('Winner');
+
+      sub.textContent = tags.join(' • ');
+
+      nameWrap.appendChild(name);
+      if (tags.length > 0) nameWrap.appendChild(sub);
+
+      left.appendChild(avatar);
+      left.appendChild(nameWrap);
+
+      // RIGHT: badge heads/tails
+      const right = document.createElement('div');
+      right.style.display = 'flex';
+      right.style.alignItems = 'center';
+      right.style.gap = '8px';
+
+      // badge z wyborem
+      const badge = document.createElement('span');
+      badge.style.display = 'inline-flex';
+      badge.style.alignItems = 'center';
+      badge.style.justifyContent = 'center';
+      badge.style.padding = '6px 10px';
+      badge.style.borderRadius = '999px';
+      badge.style.fontWeight = '900';
+      badge.style.fontSize = '12px';
+      badge.style.border = '2px solid #eef2ff';
+      badge.style.background = 'rgba(255,255,255,0.85)';
+
+      if (gameType === 'coin_flip') {
+        if (choice === 'heads') {
+          badge.textContent = 'HEADS';
+        } else if (choice === 'tails') {
+          badge.textContent = 'TAILS';
+        } else {
+          badge.textContent = '—';
+          badge.style.opacity = '0.6';
+        }
+      } else {
+        // dla innych gier na razie brak
+        badge.textContent = '';
+        badge.style.display = 'none';
+      }
+
+      right.appendChild(badge);
 
       li.appendChild(left);
       li.appendChild(right);
+
       participantsList.appendChild(li);
     });
 
@@ -303,23 +380,29 @@
     }
   }
 
-  async function pollParticipants() {
-    if (!participantsList && !participantsCount) return;
 
-    try {
-      const res = await fetch('/api/session/participants?session_id=' + encodeURIComponent(sessionId));
-      const json = await res.json().catch(() => ({}));
-      const list = Array.isArray(json.participants) ? json.participants : [];
+    async function pollParticipants(force = false) {
+      if (!participantsList && !participantsCount) return;
 
-      const hash = JSON.stringify(list.map((x) => [x.id, x.nickname, x.avatar_url]));
-      if (hash === lastParticipantsHash) return;
-      lastParticipantsHash = hash;
+      try {
+        const res = await fetch('/api/session/participants?session_id=' + encodeURIComponent(sessionId));
+        const json = await res.json().catch(() => ({}));
+        const list = Array.isArray(json.participants) ? json.participants : [];
 
-      renderParticipants(list);
-    } catch (e) {
-      // cisza
+        // WAŻNE: hash musi uwzględniać status/coin_choice
+        const hash = JSON.stringify(
+          list.map((x) => [x.id, x.nickname, x.avatar_url, x.coin_choice, x.status, x.is_host])
+        );
+
+        if (!force && hash === lastParticipantsHash) return;
+        lastParticipantsHash = hash;
+
+        renderParticipants(list);
+      } catch (e) {
+        // cisza
+      }
     }
-  }
+
 
   // -------------------------
   // Init
