@@ -157,7 +157,13 @@
 
       if (payload && payload.winner_id) {
         const wid = parseInt(payload.winner_id, 10);
-        if (hint) hint.textContent = `Winner decided! (user #${wid})`;
+        // spróbuj znaleźć zwycięzcę po nicku z cache participants
+        const winner = (lastParticipants || []).find(p => parseInt(p.id, 10) === wid);
+        const winnerName = winner?.nickname ? winner.nickname : `user #${wid}`;
+
+        if (hint) hint.textContent = `Winner decided! ${winnerName}`;
+
+        // dopnij refresh (żeby UI pokazało zielonego)
         pollParticipants(true);
       }
     } catch (e) {
@@ -165,10 +171,9 @@
     }
   }
 
-  // -------------------------
   // Participants
-  // -------------------------
   let lastParticipantsHash = '';
+  let lastParticipants = [];
 
   function renderParticipants(list) {
     if (!participantsList) return;
@@ -305,6 +310,7 @@
 
       if (!force && hash === lastParticipantsHash) return;
       lastParticipantsHash = hash;
+      lastParticipants = list;
 
       renderParticipants(list);
     } catch (e) {
