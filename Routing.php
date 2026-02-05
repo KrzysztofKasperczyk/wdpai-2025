@@ -17,7 +17,6 @@ class Routing {
 
         'tools'     => ['controller' => 'ToolsController',   'action' => 'index'],
         'coin-flip' => ['controller' => 'ToolsController',   'action' => 'coinFlip'],
-        'roll-dice' => ['controller' => 'ToolsController',   'action' => 'rollDice'],
 
         'account'   => ['controller' => 'AccountController', 'action' => 'index'],
 
@@ -66,12 +65,6 @@ class Routing {
                 return;
             }
 
-            // POST /api/dice/roll
-            if ($resource === 'dice' && $action === 'roll') {
-                $api->diceRoll();
-                return;
-            }
-
             // POST /api/session/ping
             if ($resource === 'session' && $action === 'ping') {
                 $api->ping();
@@ -94,7 +87,6 @@ class Routing {
         if ($routeName === 'tools') {
             $sub = $urlParts[1] ?? '';
             if ($sub === 'coin-flip') $routeName = 'coin-flip';
-            elseif ($sub === 'roll-dice') $routeName = 'roll-dice';
         }
 
         if (!array_key_exists($routeName, self::$routes)) {
