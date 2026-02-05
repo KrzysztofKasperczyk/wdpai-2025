@@ -10,16 +10,12 @@ class Routing {
 
     public static $routes = [
         ''          => ['controller' => 'ToolsController',   'action' => 'index'],
-
         'login'     => ['controller' => 'SecurityController','action' => 'login'],
         'register'  => ['controller' => 'SecurityController','action' => 'register'],
         'logout'    => ['controller' => 'SecurityController','action' => 'logout'],
-
         'tools'     => ['controller' => 'ToolsController',   'action' => 'index'],
         'coin-flip' => ['controller' => 'ToolsController',   'action' => 'coinFlip'],
-
         'account'   => ['controller' => 'AccountController', 'action' => 'index'],
-
     ];
 
     public static function run(string $path)

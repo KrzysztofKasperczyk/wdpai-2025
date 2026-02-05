@@ -10,7 +10,7 @@ class SecurityController extends AppController
 
     private function __construct()
     {
-        $this->userRepository = new UserRepository();
+        $this->userRepository = UserRepository::getInstance();
     }
 
     private function __clone() {}
@@ -202,7 +202,7 @@ class SecurityController extends AppController
             $repo = new GameSessionRepository();
             $repo->leaveAllSessions((int)$_SESSION['user_id']);
         }
-        
+
         session_destroy();
         $this->redirect('/login');
     }

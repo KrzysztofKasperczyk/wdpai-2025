@@ -4,6 +4,26 @@ require_once __DIR__ . '/repository.php';
 
 class UserRepository extends Repository
 {
+    private static ?self $instance = null;
+
+    // ✅ Singleton: blokujemy tworzenie z zewnątrz
+    private function __construct()
+    {
+        parent::__construct();
+    }
+
+    private function __clone() {}
+
+    public function __wakeup()
+    {
+        throw new \Exception("Cannot unserialize singleton");
+    }
+
+    public static function getInstance(): self
+    {
+        return self::$instance ??= new self();
+    }
+
     public function getUserById(int $id): ?array
     {
         $stmt = $this->database->connect()->prepare('
@@ -116,11 +136,12 @@ class UserRepository extends Repository
             SELECT total_draws, wins
             FROM user_stats
             WHERE user_id = :uid
+            LIMIT 1
         ');
         $q->execute([':uid' => $userId]);
         $row = $q->fetch(PDO::FETCH_ASSOC);
+        $q = null;
 
         return $row ?: ['total_draws' => 0, 'wins' => 0];
     }
-
 }

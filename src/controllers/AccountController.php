@@ -10,7 +10,7 @@ class AccountController extends AppController
 
     private function __construct()
     {
-        $this->userRepository = new UserRepository();
+        $this->userRepository = UserRepository::getInstance();
     }
 
     private function __clone() {}
