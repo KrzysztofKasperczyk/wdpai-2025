@@ -6,6 +6,7 @@
   const gameType = root.dataset.gameType || '';
   const inviteLink = root.dataset.inviteLink || '';
   const currentUserId = parseInt(root.dataset.currentUserId || '0', 10);
+  const isHost = (root.dataset.isHost || '0') === '1';
 
   // Elements: game panel
   const resultCircle = document.getElementById('resultCircle');
@@ -13,24 +14,27 @@
   const hint = document.getElementById('hint');
   const copyBtn = document.getElementById('copyLink');
 
-  // Elements: dice ui
-  const diceSettings = document.getElementById('diceSettings');
-  const dicePreset = document.getElementById('dicePreset');
-  const diceCustom = document.getElementById('diceCustom');
-  const dicePresetLabel = document.getElementById('dicePresetLabel');
-
   // Elements: participants
   const participantsList = document.getElementById('participantsList');
   const participantsCount = document.getElementById('participantsCount');
 
-  const isHost = (root.dataset.isHost || '0') === '1';
-
   if (!sessionId) return;
 
-  // Label przycisku w zależności od gry
-  if (actionBtn) {
-    if (gameType === 'coin_flip') actionBtn.textContent = 'Flip coin';
-    if (gameType === 'roll_dice') actionBtn.textContent = 'Roll dice';
+  // Coin-flip only
+  if (gameType !== 'coin_flip') {
+    if (hint) hint.textContent = 'Unsupported game type.';
+    if (actionBtn) actionBtn.disabled = true;
+    return;
+  }
+
+  // Button label
+  if (actionBtn) actionBtn.textContent = 'Flip coin';
+
+  // Observer UI
+  if (!isHost && actionBtn) {
+    actionBtn.disabled = true;
+    actionBtn.classList.add('disabled');
+    if (hint) hint.textContent = 'You are an observer in this session.';
   }
 
   // Copy invite link
@@ -76,7 +80,6 @@
       if (navigator.sendBeacon) {
         navigator.sendBeacon('/api/session/leave', blob);
       } else {
-        // fallback (niezbyt pewny przy unload, ale lepsze niż nic)
         fetch('/api/session/leave', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -89,109 +92,38 @@
     }
   }
 
-  // typowo działa przy zamknięciu karty / przejściu na inną stronę
   window.addEventListener('beforeunload', leaveNow);
 
-  // działa przy przejściu karty w tło (mobilki też)
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') {
       leaveNow();
     } else {
-      // wrócił na kartę -> odśwież presence szybciej
       ping();
-      pollParticipants();
+      pollParticipants(true);
     }
   });
 
   // -------------------------
-  // Dice UI
-  // -------------------------
-  function initDiceUI() {
-    if (gameType !== 'roll_dice') return;
-    if (!diceSettings || !dicePreset || !diceCustom || !dicePresetLabel) return;
-
-    diceSettings.style.display = 'block';
-
-    if (!isHost) {
-      dicePreset.disabled = true;
-      diceCustom.disabled = true;
-    }
-
-
-    function sync() {
-      const val = dicePreset.value;
-
-      if (val === 'custom') {
-        diceCustom.style.display = 'inline-block';
-        dicePresetLabel.textContent = 'Custom';
-      } else {
-        diceCustom.style.display = 'none';
-        dicePresetLabel.textContent = 'D' + val;
-      }
-
-      if (!isHost && actionBtn) {
-        actionBtn.disabled = true;
-        actionBtn.classList.add('disabled');
-        if (hint) hint.textContent = 'You are an observer in this session.';
-      }
-
-    }
-
-    dicePreset.addEventListener('change', sync);
-    diceCustom.addEventListener('input', () => {
-      dicePresetLabel.textContent = 'Custom';
-    });
-
-    sync();
-  }
-
-  function getDiceSides() {
-    if (!dicePreset || !diceCustom) return 6;
-
-    if (dicePreset.value !== 'custom') {
-      return parseInt(dicePreset.value, 10);
-    }
-
-    const n = parseInt(diceCustom.value, 10);
-    if (!Number.isFinite(n) || n < 2 || n > 1000) {
-      if (hint) hint.textContent = 'Custom sides must be between 2 and 1000. Using D6.';
-      return 6;
-    }
-    return n;
-  }
-
-  // -------------------------
-  // Game action
+  // Game action (host-only)
   // -------------------------
   async function doAction() {
     if (!isHost) {
       if (hint) hint.textContent = 'Only the host can control the game.';
       return;
-  }
+    }
 
     if (hint) hint.textContent = '';
 
-    if (gameType === 'coin_flip') {
-      const { ok, data } = await postJson('/api/coin-flip/flip', { session_id: sessionId });
-      if (!ok) {
-        if (hint) hint.textContent = data.error || 'Error';
-        return;
-      }
-      if (resultCircle) resultCircle.textContent = data.result;
-      pollParticipants(true);
+    const { ok, data } = await postJson('/api/coin-flip/flip', { session_id: sessionId });
+    if (!ok) {
+      if (hint) hint.textContent = data.error || 'Error';
       return;
     }
 
-    if (gameType === 'roll_dice') {
-      const sides = getDiceSides();
-      const { ok, data } = await postJson('/api/dice/roll', { session_id: sessionId, sides });
-      if (!ok) {
-        if (hint) hint.textContent = data.error || 'Error';
-        return;
-      }
-      if (resultCircle) resultCircle.textContent = data.result;
-      return;
-    }
+    if (resultCircle) resultCircle.textContent = data.result;
+
+    // po flippie wymuś odświeżenie listy (eliminacje/winner/nowe wybory)
+    pollParticipants(true);
   }
 
   actionBtn?.addEventListener('click', doAction);
@@ -210,6 +142,8 @@
 
       if (lastEventId === ev.id) return;
       lastEventId = ev.id;
+
+      // nowy event -> odśwież participants
       pollParticipants(true);
 
       let payload = ev.payload;
@@ -220,18 +154,12 @@
       if (payload && payload.result !== undefined) {
         if (resultCircle) resultCircle.textContent = payload.result;
       }
-      // winner komunikat dla wszystkich
+
       if (payload && payload.winner_id) {
         const wid = parseInt(payload.winner_id, 10);
-
-        // spróbuj znaleźć nick zwycięzcy w aktualnej liście DOM (na szybko)
-        // (lepsza wersja: trzymać ostatnią listę participants w zmiennej — ale to już optional)
         if (hint) hint.textContent = `Winner decided! (user #${wid})`;
-
-        // po winnerze wymuś odświeżenie listy uczestników, żeby zobaczyć zielonego
-        pollParticipants();
+        pollParticipants(true);
       }
-
     } catch (e) {
       // cisza
     }
@@ -256,7 +184,6 @@
       return;
     }
 
-    // helper: normalize is_host (postgres potrafi zwrócić true/false, "t"/"f", 1/0)
     const isHostFlag = (v) => v === true || v === 1 || v === '1' || v === 't' || v === 'true';
 
     list.forEach((p) => {
@@ -275,7 +202,7 @@
       li.style.borderRadius = '14px';
       li.style.background = 'rgba(255,255,255,0.7)';
 
-      // LEFT: avatar + name
+      // LEFT
       const left = document.createElement('div');
       left.style.display = 'flex';
       left.style.alignItems = 'center';
@@ -289,7 +216,6 @@
       avatar.style.display = 'grid';
       avatar.style.placeItems = 'center';
       avatar.style.fontWeight = '900';
-
       avatar.textContent = nick.slice(0, 1).toUpperCase();
 
       if (p.avatar_url) {
@@ -308,13 +234,8 @@
       name.style.fontWeight = '900';
       name.textContent = nick || 'Unknown';
 
-      // kolory statusów
-      if (status === 'eliminated') {
-        name.style.color = '#dc2626'; // czerwony
-      }
-      if (status === 'winner') {
-        name.style.color = '#16a34a'; // zielony
-      }
+      if (status === 'eliminated') name.style.color = '#dc2626';
+      if (status === 'winner') name.style.color = '#16a34a';
 
       const sub = document.createElement('div');
       sub.className = 'hint';
@@ -325,7 +246,6 @@
       if (isHostFlag(p.is_host)) tags.push('Host');
       if (status === 'eliminated') tags.push('Eliminated');
       if (status === 'winner') tags.push('Winner');
-
       sub.textContent = tags.join(' • ');
 
       nameWrap.appendChild(name);
@@ -334,13 +254,11 @@
       left.appendChild(avatar);
       left.appendChild(nameWrap);
 
-      // RIGHT: badge heads/tails
+      // RIGHT badge
       const right = document.createElement('div');
       right.style.display = 'flex';
       right.style.alignItems = 'center';
-      right.style.gap = '8px';
 
-      // badge z wyborem
       const badge = document.createElement('span');
       badge.style.display = 'inline-flex';
       badge.style.alignItems = 'center';
@@ -352,26 +270,19 @@
       badge.style.border = '2px solid #eef2ff';
       badge.style.background = 'rgba(255,255,255,0.85)';
 
-      if (gameType === 'coin_flip') {
-        if (choice === 'heads') {
-          badge.textContent = 'HEADS';
-        } else if (choice === 'tails') {
-          badge.textContent = 'TAILS';
-        } else {
-          badge.textContent = '—';
-          badge.style.opacity = '0.6';
-        }
+      if (choice === 'heads') {
+        badge.textContent = 'HEADS';
+      } else if (choice === 'tails') {
+        badge.textContent = 'TAILS';
       } else {
-        // dla innych gier na razie brak
-        badge.textContent = '';
-        badge.style.display = 'none';
+        badge.textContent = '—';
+        badge.style.opacity = '0.6';
       }
 
       right.appendChild(badge);
 
       li.appendChild(left);
       li.appendChild(right);
-
       participantsList.appendChild(li);
     });
 
@@ -380,46 +291,38 @@
     }
   }
 
+  async function pollParticipants(force = false) {
+    if (!participantsList && !participantsCount) return;
 
-    async function pollParticipants(force = false) {
-      if (!participantsList && !participantsCount) return;
+    try {
+      const res = await fetch('/api/session/participants?session_id=' + encodeURIComponent(sessionId));
+      const json = await res.json().catch(() => ({}));
+      const list = Array.isArray(json.participants) ? json.participants : [];
 
-      try {
-        const res = await fetch('/api/session/participants?session_id=' + encodeURIComponent(sessionId));
-        const json = await res.json().catch(() => ({}));
-        const list = Array.isArray(json.participants) ? json.participants : [];
+      const hash = JSON.stringify(
+        list.map((x) => [x.id, x.nickname, x.avatar_url, x.coin_choice, x.status, x.is_host])
+      );
 
-        // WAŻNE: hash musi uwzględniać status/coin_choice
-        const hash = JSON.stringify(
-          list.map((x) => [x.id, x.nickname, x.avatar_url, x.coin_choice, x.status, x.is_host])
-        );
+      if (!force && hash === lastParticipantsHash) return;
+      lastParticipantsHash = hash;
 
-        if (!force && hash === lastParticipantsHash) return;
-        lastParticipantsHash = hash;
-
-        renderParticipants(list);
-      } catch (e) {
-        // cisza
-      }
+      renderParticipants(list);
+    } catch (e) {
+      // cisza
     }
-
+  }
 
   // -------------------------
   // Init
   // -------------------------
-  initDiceUI();
-
-  // pierwsze pobranie (i presence)
   ping();
   pollLatest();
-  pollParticipants();
+  pollParticipants(true);
 
-  // heartbeat: co 5s
   setInterval(ping, 5000);
 
-  // polling UI: co 2s
   setInterval(() => {
     pollLatest();
-    pollParticipants();
+    pollParticipants(false);
   }, 2000);
 })();
