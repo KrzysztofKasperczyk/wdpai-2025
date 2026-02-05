@@ -1,0 +1,6 @@
+ALTER TABLE game_session_participants
+ADD COLUMN IF NOT EXISTS coin_choice VARCHAR(10),
+ADD COLUMN IF NOT EXISTS status VARCHAR(12) NOT NULL DEFAULT 'active'
+  CHECK (status IN ('active','eliminated','winner')),
+ADD COLUMN IF NOT EXISTS eliminated_at TIMESTAMP NULL,
+ADD COLUMN IF NOT EXISTS round INTEGER NOT NULL DEFAULT 0;
