@@ -51,4 +51,20 @@ class GameSessionRepository extends Repository
             ':user_id' => $userId
         ]);
     }
+
+    public function getParticipants(string $sessionId): array
+    {
+        $stmt = $this->database->connect()->prepare('
+            SELECT u.id, u.nickname, u.avatar_url
+            FROM game_session_participants p
+            JOIN users u ON u.id = p.user_id
+            WHERE p.session_id = :session_id
+            ORDER BY p.joined_at ASC
+        ');
+        $stmt->execute([':session_id' => $sessionId]);
+
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $rows ?: [];
+    }
+
 }

@@ -129,4 +129,31 @@ class GameApiController extends AppController
         $this->json(['ok' => true, 'event_id' => $eventId, 'result' => $result, 'sides' => $sides], 200);
     }
 
+        /**
+     * GET /api/session/participants?session_id=UUID
+     */
+    public function participants(): void
+    {
+        
+
+        $this->requireAuth();
+
+        $sessionId = $_GET['session_id'] ?? '';
+        if ($sessionId === '') {
+            $this->json(['error' => 'session_id is required'], 400);
+        }
+
+        $session = $this->sessionRepo->findById($sessionId);
+        if (!$session) {
+            $this->json(['error' => 'session not found'], 404);
+        }
+
+        $participants = $this->sessionRepo->getParticipants($sessionId);
+
+        $this->json([
+            'participants' => $participants
+        ], 200);
+    }
+
+
 }

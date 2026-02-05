@@ -16,6 +16,7 @@
   data-session-id="<?= htmlspecialchars($session['id']) ?>"
   data-game-type="<?= htmlspecialchars($session['game_type']) ?>"
   data-invite-link="<?= htmlspecialchars($inviteLink) ?>"
+  data-current-user-id="<?= (int)$currentUserId ?>"
 >
   <h1 class="h1">Game session</h1>
 
@@ -62,7 +63,17 @@
     </div>
 
     <p class="hint" id="hint"></p>
+  
   </div>
+    <div class="panel" style="margin-top: 16px;">
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+      <h2 style="margin:0; font-size:18px;">Participants</h2>
+      <span class="hint" id="participantsCount"></span>
+    </div>
+
+    <ul id="participantsList" style="list-style:none; padding:0; margin:14px 0 0; display:grid; gap:10px;"></ul>
+  </div>
+
 </main>
 
 <script src="/public/scripts/session.js" defer></script>

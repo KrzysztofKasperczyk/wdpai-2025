@@ -58,7 +58,8 @@ class SessionController extends AppController
 
         $this->render('session', [
             'session' => $session,
-            'inviteLink' => $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . '/session/' . $uuid
+            'inviteLink' => $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . '/session/' . $uuid,
+            'currentUserId' => (int)$_SESSION['user_id']
         ]);
     }
 

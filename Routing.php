@@ -53,6 +53,12 @@ class Routing {
                 $api->latest();
                 return;
             }
+            
+            // GET /api/session/participants
+            if ($resource === 'session' && $action === 'participants') {
+                $api->participants();
+                return;
+            }
 
             // POST /api/coin-flip/flip
             if ($resource === 'coin-flip' && $action === 'flip') {
@@ -65,6 +71,8 @@ class Routing {
                 $api->diceRoll();
                 return;
             }
+
+            
 
             http_response_code(404);
             header('Content-Type: application/json');
