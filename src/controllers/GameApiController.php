@@ -89,49 +89,6 @@ class GameApiController extends AppController
         $this->json(['ok'=>true,'event_id'=>$eventId,'result'=>$result,'winner_id'=>$winnerId], 200);
 
     }
-
-    /**
-     * POST /api/dice/roll { session_id, sides? }
-     */
-    public function diceRoll(): void
-    {
-        $this->requireAuth();
-
-        if (!$this->isPost()) {
-            $this->json(['error' => 'Method Not Allowed'], 405);
-        }
-
-        $data = $this->getJsonBody();
-        $sessionId = $data['session_id'] ?? '';
-        $sides = (int)($data['sides'] ?? 6);
-        if ($sides < 2 || $sides > 1000) $sides = 6;
-
-        if ($sessionId === '') {
-            $this->json(['error' => 'session_id is required'], 400);
-        }
-
-        $session = $this->sessionRepo->findById($sessionId);
-        if (!$session) {
-            $this->json(['error' => 'session not found'], 404);
-        }
-        if ($session['game_type'] !== 'roll_dice') {
-            $this->json(['error' => 'wrong game type for this endpoint'], 400);
-        }
-
-        $this->requireHost($session);
-        $result = random_int(1, $sides);
-
-        $payload = [
-            'result' => $result,
-            'sides' => $sides,
-            'by_user_id' => (int)$_SESSION['user_id']
-        ];
-
-        $eventId = $this->eventRepo->createEvent($sessionId, 'roll_dice', $payload);
-
-        $this->json(['ok' => true, 'event_id' => $eventId, 'result' => $result, 'sides' => $sides], 200);
-    }
-
         /**
      * GET /api/session/participants?session_id=UUID
      */
