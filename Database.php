@@ -1,17 +1,18 @@
 <?php
-//read variables from .env instead
+
 require_once "config.php";
 
-//zrobi singelton
-//przerzucic do src/services
-
-
+// Prosta klasa do obsługi połączenia z bazą danych
+// Nie wykonuje zapytań -> Repozytoria
 class Database {
+
+    // Dane do połączenia, pobierane z config.php
     private $username;
     private $password;
     private $host;
     private $database;
 
+    // Konstruktor pobiera dane ze stałych i zapisuje je w obiekcie
     public function __construct()
     {
         $this->username = USERNAME;
@@ -20,6 +21,7 @@ class Database {
         $this->database = DATABASE;
     }
 
+    // Tworzy i zwraca połączenie PDO do PostgreSQL 
     public function connect()
     {
         try {
@@ -30,12 +32,15 @@ class Database {
                 ["sslmode"  => "prefer"]
             );
 
-            // set the PDO error mode to exception
+            // Ustawia tryb raportowania błędów na wyjątki
             $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+            // Zwraca obiekt połączenia, który będzie używany w repozytoriach do wykonywania zapytań SQL
             return $conn;
         }
-        //zamiast die -> zwróć strone z błędem
-        //napisać metode disconnect, ustawic jakas zmienna ktora bedzie sie ustawiac na null
+        
+
+        // Jeśli połączenie się nie powiedzie, wyświetla komunikat o błędzie
         catch(PDOException $e) {
             die("Connection failed: " . $e->getMessage());
         }
