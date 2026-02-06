@@ -1,3 +1,5 @@
+
+# Oficjalny obraz Nginx w wersji 1.17.8 oparty na Alpine Linux
 FROM nginx:1.17.8-alpine
 
 # Copy the public directory
