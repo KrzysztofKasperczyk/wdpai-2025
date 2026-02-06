@@ -1,52 +1,63 @@
 version: '3'
 
+# services oznacza jakie kontenery zostaną uruchomione + konfiguracje
+# budowane na podstawie dockerfile'i
 services:
+  
+  # web - nginx
   web:
     build:
-      context: .
-      dockerfile: docker/nginx/Dockerfile
+      context: .    # katalog, w którym znajduje się Dockerfile
+      dockerfile: docker/nginx/Dockerfile     
     ports:
-      - "8080:80"
+      - "8080:80"   # mapowanie portów: localhost:8080 -> nginx:80
     volumes:
-      - .:/app/
+      - .:/app/     # montowanie katalogu projektu do kontenera /app/
     links:
-      - php
+      - php         # komunikacja między kontenerami web <-> php
     networks:
-      - pg-network
+      - pg-network  # wspólna sieć dla wszystkich kontenerów, powinna pozwolić na komunikację nawet po usunięciu links ale zostawiam dla pewności
   
+
+  # baza danych - postgres
   db:
     build:
-      context: .
+      context: .     # katalog, w którym znajduje się Dockerfile
       dockerfile: docker/db/Dockerfile
     ports:
-      - "5433:5432"
+      - "5433:5432"  # mapowanie portów: localhost:5433 -> postgres:5432
     networks:
-      - pg-network
+      - pg-network   # wspólna sieć dla wszystkich kontenerów
     volumes:
-      - ./docker/db:/docker-entrypoint-initdb.d
+      - ./docker/db:/docker-entrypoint-initdb.d  # montowanie katalogu z inicjalizacją bazy (np. tworzenie tabel) do katalogu, 
+                                                 # który postgres automatycznie wykonuje przy starcie
   
+
+  # backend - php
   php:
     build:
-      context: .
+      context: .    # katalog, w którym znajduje się Dockerfile
       dockerfile: docker/php/Dockerfile
     volumes:
-      - .:/app
-    networks:
-      - pg-network
+      - .:/app      # montowanie katalogu projektu do kontenera /app/
+    networks:    
+      - pg-network  # wspólna sieć dla wszystkich kontenerów
   
+
+  # pgadmin - narzędzie do zarządzania bazą danych
   pgadmin-wdpai:
-    image: dpage/pgadmin4:latest
-    container_name: pg-admin2
+    image: dpage/pgadmin4:latest  # gotowy obraz pgadmina z Docker Hub
+    container_name: pg-admin2     # nazwa kontenera (opcjonalna)
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@example.com
-      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_DEFAULT_EMAIL: admin@example.com   # domyślny email do logowania
+      PGADMIN_DEFAULT_PASSWORD: admin            # domyślne hasło do logowania
     ports:
-      - "5050:80"
+      - "5050:80"                 # mapowanie portów: localhost:5050 -> pgadmin:80
     networks:
-      - pg-network
+      - pg-network                # wspólna sieć dla wszystkich kontenerów, pozwala pgadminowi komunikować się z bazą danych
   
 networks:
-  pg-network:
+  pg-network: # wspólna sieć dla wszystkich kontenerów
 
 volumes:
-  pg-data:
+  pg-data:    # wolumen do przechowywania danych bazy danych, dzięki temu dane nie znikną po usunięciu kontenera

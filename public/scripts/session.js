@@ -57,9 +57,7 @@
     return { ok: res.ok, data };
   }
 
-  // -------------------------
   // Presence: heartbeat + leave
-  // -------------------------
   async function ping() {
     try {
       await fetch('/api/session/ping', {
@@ -103,9 +101,7 @@
     }
   });
 
-  // -------------------------
   // Game action (host-only)
-  // -------------------------
   async function doAction() {
     if (!isHost) {
       if (hint) hint.textContent = 'Only the host can control the game.';
@@ -128,9 +124,7 @@
 
   actionBtn?.addEventListener('click', doAction);
 
-  // -------------------------
   // Poll latest event
-  // -------------------------
   let lastEventId = null;
 
   async function pollLatest() {
@@ -318,9 +312,7 @@
     }
   }
 
-  // -------------------------
   // Init
-  // -------------------------
   ping();
   pollLatest();
   pollParticipants(true);
