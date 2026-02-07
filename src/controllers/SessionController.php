@@ -5,6 +5,7 @@ require_once __DIR__ . '/../repository/GameSessionRepository.php';
 
 class SessionController extends AppController
 {
+    // Singleton
     private static ?self $instance = null;
     private GameSessionRepository $repository;
 
@@ -22,43 +23,58 @@ class SessionController extends AppController
     }
 
     /**
-     * /session/create?game=coin_flip
+     * GET /session/create?game=coin_flip
+     * Tworzy nową sesję gry i przekierowuje do /session/{uuid}
      */
     public function create(): void
     {
+        // Tylko dla zalogowanych
         $this->requireAuth();
 
+        // Whitelist dozwolonych gier
         $game = $_GET['game'] ?? null;
-        if (!in_array($game, ['coin_flip', 'roll_dice'], true)) {
+        if (!in_array($game, ['coin_flip'], true)) {
             $this->redirect('/tools');
         }
 
+        // Generuje UUID dla sesji
         $uuid = $this->generateUuid();
+
+        // User tworzący sesję jest hostem
         $userId = (int)$_SESSION['user_id'];
 
+        // Zapisz sesję w DB oraz dodaj hosta jako uczestnika
         $this->repository->create($uuid, $game, $userId);
+
 
         $this->redirect('/session/' . $uuid);
     }
 
     /**
-     * /session/{uuid}
+     * GET /session/{uuid}
+     * Renderuje stronę sesji (widok) i dołącza użytkownika jako uczestnika
      */
     public function view(string $uuid): void
     {
         $this->requireAuth();
 
+        // Pobierz sesję po id
         $session = $this->repository->findById($uuid);
         if (!$session) {
             $this->render('404');
             return;
         }
 
+        // Dodaj/odśwież uczestnika
         $this->repository->addParticipant($uuid, (int)$_SESSION['user_id']);
+
+        // Jeśli to coin_flip, przypisz coin_choice przy wejściu
         $this->repository->ensureCoinChoiceOnJoin($uuid, (int)$_SESSION['user_id']);
 
-
+        // Czy aktualny user jest hostem?
         $isHost = ((int)$session['created_by'] === (int)$_SESSION['user_id']);
+
+        // Renderuj widok sesji z danymi sesji, linkiem do zaproszenia i informacją czy user jest hostem
         $this->render('session', [
             'session' => $session,
             'inviteLink' => $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . '/session/' . $uuid,

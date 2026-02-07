@@ -34,6 +34,11 @@ abstract class AppController
             str_starts_with($uri, '/register') ||
             str_starts_with($uri, '/logout');
 
+        $isApiCall = str_starts_with($uri, '/api/');
+
+        if (!$isAuthPage && !$isApiCall) {
+            $_SESSION['redirect_after_login'] = $uri;
+        }
         // Jeżeli przekierowanie jest ok, zapisz je w sesji, żeby po zalogowaniu przekierować użytkownika
         if (!$isAuthPage) {
             $_SESSION['redirect_after_login'] = $uri;

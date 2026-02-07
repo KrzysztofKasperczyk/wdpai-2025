@@ -8,6 +8,7 @@ class GameSessionRepository extends Repository
     {
         $db = $this->database->connect();
 
+        // Tworzy rekord sesji gry
         $stmt = $db->prepare('
             INSERT INTO game_sessions (id, game_type, created_by)
             VALUES (:id, :game_type, :created_by)
@@ -33,6 +34,7 @@ class GameSessionRepository extends Repository
 
     public function findById(string $uuid): ?array
     {
+        // Prosty SELECT sesji po id
         $stmt = $this->database->connect()->prepare('
             SELECT * FROM game_sessions WHERE id = :id
         ');
@@ -44,6 +46,7 @@ class GameSessionRepository extends Repository
 
     public function addParticipant(string $uuid, int $userId): void
     {
+        // Dodaje uczestnika do sesji (lub aktualizuje timestamp jeśli już jest)
         $stmt = $this->database->connect()->prepare('
             INSERT INTO game_session_participants (session_id, user_id, last_seen, left_at, status)
             VALUES (:session_id, :user_id, CURRENT_TIMESTAMP, NULL, \'active\')
@@ -58,6 +61,10 @@ class GameSessionRepository extends Repository
 
     public function getParticipants(string $sessionId, int $ttlSeconds = 15): array
     {
+        // Pobiera uczestników, którzy:
+        // - nie wyszli (left_at IS NULL)
+        // - są "online" (last_seen w ostatnich ttlSeconds)
+        // + dołącza dane usera i info czy jest hostem
         $stmt = $this->database->connect()->prepare('
             SELECT u.id, u.nickname, u.avatar_url,
                    p.coin_choice, p.status,
@@ -78,8 +85,10 @@ class GameSessionRepository extends Repository
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
 
+    // Metoda do aktualizacji "last_seen"
     public function touchParticipant(string $sessionId, int $userId): void
     {
+        // Heartbeat: użytkownik jest obecny -> last_seen = now, left_at = NULL
         $stmt = $this->database->connect()->prepare('
             UPDATE game_session_participants
             SET last_seen = CURRENT_TIMESTAMP, left_at = NULL
@@ -93,6 +102,7 @@ class GameSessionRepository extends Repository
 
     public function leaveSession(string $sessionId, int $userId): void
     {
+        // Użytkownik opuszcza sesję -> ustaw left_at = now
         $stmt = $this->database->connect()->prepare('
             UPDATE game_session_participants
             SET left_at = CURRENT_TIMESTAMP
@@ -106,6 +116,7 @@ class GameSessionRepository extends Repository
 
     public function leaveAllSessions(int $userId): void
     {
+        // Ustawia left_at = now dla wszystkich sesji, w których uczestniczył dany user
         $stmt = $this->database->connect()->prepare('
             UPDATE game_session_participants
             SET left_at = CURRENT_TIMESTAMP
@@ -119,6 +130,7 @@ class GameSessionRepository extends Repository
      * - host: losowo
      * - pierwszy gość: przeciwna wartość do hosta
      * - kolejni: losowo
+     * Transakcja + FOR UPDATE -> ochrona przed równoczesnymi wejściami.
      */
     public function ensureCoinChoiceOnJoin(string $sessionId, int $userId): void
     {
@@ -126,16 +138,18 @@ class GameSessionRepository extends Repository
         $db->beginTransaction();
 
         try {
+            // Blokada sesji, żeby nikt nie zmienił jej stanu w trakcie
             $s = $db->prepare('SELECT id, game_type, created_by FROM game_sessions WHERE id = :id FOR UPDATE');
             $s->execute([':id' => $sessionId]);
             $session = $s->fetch(PDO::FETCH_ASSOC);
 
+            // Jeśli sesji nie ma lub to nie coin_flip -> nic nie robi
             if (!$session || $session['game_type'] !== 'coin_flip') {
                 $db->commit();
                 return;
             }
 
-            // zablokuj participant
+            // Blokada wierszu uczestnika (żeby 2 procesy nie przypisały coin_choice równolegle)
             $p = $db->prepare('
                 SELECT coin_choice
                 FROM game_session_participants
@@ -145,13 +159,16 @@ class GameSessionRepository extends Repository
             $p->execute([':sid' => $sessionId, ':uid' => $userId]);
             $row = $p->fetch(PDO::FETCH_ASSOC);
 
+            // Jeśli nie ma wiersza uczestnika -> nic
             if (!$row) { $db->commit(); return; }
+
+            // Jeśli coin_choice już jest ustawione -> nic
             if (!empty($row['coin_choice'])) { $db->commit(); return; }
 
             $hostId = (int)$session['created_by'];
             $isHost = ($userId === $hostId);
 
-            // host coin_choice
+            // Pobiera (i blokuje) wiersz hosta, żeby sprawdzić jego coin_choice
             $hostStmt = $db->prepare('
                 SELECT coin_choice
                 FROM game_session_participants
@@ -162,7 +179,7 @@ class GameSessionRepository extends Repository
             $host = $hostStmt->fetch(PDO::FETCH_ASSOC);
             $hostChoice = $host ? ($host['coin_choice'] ?? null) : null;
 
-            // ilu uczestników jest w sesji i nie wyszli (bez TTL)
+            // Liczysz ilu uczestników jest w sesji (bez TTL - czyli "w środku", niekoniecznie online)
             $cnt = $db->prepare('
                 SELECT COUNT(*)::int AS cnt
                 FROM game_session_participants
@@ -174,6 +191,7 @@ class GameSessionRepository extends Repository
             $choice = null;
 
             if ($isHost) {
+                // Host losowo
                 $choice = (random_int(0, 1) === 0) ? 'heads' : 'tails';
             } else {
                 // jeśli host jeszcze nie ma -> ustaw
@@ -187,14 +205,16 @@ class GameSessionRepository extends Repository
                     $updHost->execute([':c' => $hostChoice, ':sid' => $sessionId, ':hid' => $hostId]);
                 }
 
-                // pierwszy gość po hoście: total == 2 (host + on)
+                // Pierwszy gość po hoście (host + on = 2) -> przeciwna strona
                 if ($total === 2) {
                     $choice = ($hostChoice === 'heads') ? 'tails' : 'heads';
                 } else {
+                    // Kolejni losowo
                     $choice = (random_int(0, 1) === 0) ? 'heads' : 'tails';
                 }
             }
 
+            // Zapisuje coin_choice dla dołączającego uczestnika
             $upd = $db->prepare('
                 UPDATE game_session_participants
                 SET coin_choice = :c, status = \'active\'
@@ -224,6 +244,7 @@ class GameSessionRepository extends Repository
         $db->beginTransaction();
 
         try {
+            // Blokuje sesję na czas rundy
             $s = $db->prepare('SELECT id, game_type FROM game_sessions WHERE id = :id FOR UPDATE');
             $s->execute([':id' => $sessionId]);
             $session = $s->fetch(PDO::FETCH_ASSOC);
@@ -272,7 +293,7 @@ class GameSessionRepository extends Repository
                 ');
                 $elim->execute([':sid' => $sessionId, ':res' => $result]);
 
-                // ---- STATS: eliminated -> total_draws + 1 ----
+                // STATS: eliminated -> total_draws + 1
                 foreach ($eliminatedIds as $uid) {
                     $st = $db->prepare('
                         INSERT INTO user_stats (user_id, total_draws, wins, losses, draws)
@@ -285,10 +306,11 @@ class GameSessionRepository extends Repository
                 }
             }
 
-            // winner?
+            // Jeśli został dokładnie 1 -> winner
             if (count($remaining) === 1) {
                 $winnerId = (int)$remaining[0];
 
+                // Ustawia status winner w participants
                 $w = $db->prepare('
                     UPDATE game_session_participants
                     SET status = \'winner\'
@@ -296,7 +318,7 @@ class GameSessionRepository extends Repository
                 ');
                 $w->execute([':sid' => $sessionId, ':uid' => $winnerId]);
 
-                // ---- STATS: winner -> wins +1 AND total_draws +1 ----
+                // STATS: winner dostaje total_draws +1 oraz wins +1
                 $st = $db->prepare('
                     INSERT INTO user_stats (user_id, total_draws, wins, losses, draws)
                     VALUES (:uid, 1, 1, 0, 0)
@@ -311,18 +333,21 @@ class GameSessionRepository extends Repository
                 return ['winner_id' => $winnerId];
             }
 
-            // reroll assignments dla pozostałych (min 2 różne jeśli >=2)
+            // Jeśli zostało >=2 -> nadaj nowe coin_choice (co najmniej 2 różne)
             if (count($remaining) >= 2) {
                 shuffle($remaining);
 
+                // Gwarancja: co najmniej 2 różne wartości, jeśli są min 2 osoby
                 $assign = [];
                 $assign[$remaining[0]] = 'heads';
                 $assign[$remaining[1]] = 'tails';
 
+                // Reszta losowo
                 for ($i = 2; $i < count($remaining); $i++) {
                     $assign[$remaining[$i]] = (random_int(0, 1) === 0) ? 'heads' : 'tails';
                 }
 
+                // Zapis nowego coin_choice i zwiększenie numeru rundy
                 foreach ($assign as $uid => $choice) {
                     $u = $db->prepare('
                         UPDATE game_session_participants
